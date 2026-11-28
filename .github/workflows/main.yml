@@ -1,4 +1,4 @@
-name: CI
+name: Main
 on:
   push:
   pull_request:
@@ -108,10 +108,10 @@ jobs:
           pushd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml && popd
 
       - name: Rebuild Lime
-        run : arch x86_64 haxelib run lime rebuild mac -release
+        run : arch -x86_64 haxelib run lime rebuild mac -release
 
       - name: Compile FPS Plus Build
-        run: arch x86_64 haxelib run lime build mac
+        run: arch -x86_64 haxelib run lime build mac
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
@@ -188,7 +188,7 @@ jobs:
       - name: Package Universal App Bundle
         run: ditto -c -k --sequesterRsrc --keepParent FunkinFPSPlus.app FunkinFPSPlus.zip
         
-      - name: Upload Universal Mac bundle
+      - name: Upload Universal Mac Bundle
         uses: actions/upload-artifact@v7
         with:
           name: macBuild-Universal
