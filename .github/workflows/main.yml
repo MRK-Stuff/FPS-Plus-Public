@@ -35,16 +35,6 @@ jobs:
       - name: Compile FPS Plus Build
         run: haxelib run lime build windows
 
-      - name: Save Current Cache
-        id: cache-release-build-windows-save
-        uses: actions/cache/save@v6
-        with:
-          path: |
-            .haxelib
-            export/release/windows/haxe
-            export/release/windows/obj
-          key: cache-windows-build
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
