@@ -140,11 +140,14 @@ jobs:
           lipo -create "$INTEL/FunkinFPSPlus" "$ARM/FunkinFPSPlus" -output "$BIN/FunkinFPSPlus"
           lipo -create "$INTEL/lime.ndll" "$ARM/lime.ndll" -output "$BIN/lime.ndll"
 
+      - name: Package Universal App Bundle
+        run: ditto -c -k --sequesterRsrc --keepParent FunkinFPSPlus.app FunkinFPSPlus.zip
+        
       - name: Upload Universal Mac bundle
         uses: actions/upload-artifact@v7
         with:
           name: macBuild-Universal
-          path: !FunkinFPSPlus.app
+          path: FunkinFPSPlus.app
   Linux-x86_64:
     runs-on: ubuntu-26.04
     permissions: write-all
