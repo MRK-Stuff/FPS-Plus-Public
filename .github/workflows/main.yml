@@ -8,7 +8,7 @@ env:
   HAXE_VERSION: 4.3.7
 
 jobs:
-  Windows:
+  Windows-x86_64:
     runs-on: windows-2022
     permissions: write-all
     steps:
@@ -38,10 +38,43 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: windowsBuild
+          name: windowsBuild-x86_64
           path: export/release/windows/bin
           if-no-files-found: warn
-  Mac:
+  Build-Mac-x86_64:
+    runs-on: macos-26
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: ${{ env.HAXE_VERSION }}
+
+      - name: Install Haxe Libraries
+        run: |
+          haxelib --global git haxelib https://github.com/FuroYT/haxelib.git
+          haxelib --global git hmm  https://github.com/FunkinCrew/hmm.git
+          haxelib --global run hmm install -q
+          haxelib --global fixrepo
+          haxelib --global list
+          pushd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml && popd
+
+      - name: Rebuild Lime
+        run : arch x86_64 haxelib run lime rebuild mac -release
+
+      - name: Compile FPS Plus Build
+        run: arch x86_64 haxelib run lime build mac
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macBuild-x86_64
+          path: export/release/macos/bin
+          if-no-files-found: warn
+  Build-Mac-ARM64:
     runs-on: macos-26
     permissions: write-all
     steps:
@@ -71,10 +104,48 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: macBuild
+          name: macBuild-arm64
           path: export/release/macos/bin
           if-no-files-found: warn
-  Linux:
+  Mac-Universal:
+    runs-on: macos-26
+    needs: 
+      - Build-Mac-x86_64
+      - Build-Mac-ARM64
+    steps:
+      - name: Download x86_64 build
+        uses: actions/download-artifact@v8
+        with:
+          name: macBuild-x86_64
+          path: intel
+
+      - name: Download ARM64 build
+        uses: actions/download-artifact@v8
+        with:
+          name: macBuild-arm64
+          path: arm
+
+      - name: Remove ARM64 and x86_64 artifacts
+        uses: geekyeggo/delete-artifact@v6
+        with:
+          name: macBuild-*
+
+      - name: Create Universal App Bundle
+        shell: bash
+        run: |
+          BIN="FunkinFPSPlus.app/Contents/MacOS"
+          INTEL="intel/FunkinFPSPlus.app/Contents/MacOS"
+          ARM="arm/FunkinFPSPlus.app/Contents/MacOS"
+          cp -R intel/FunkinFPSPlus.app FunkinFPSPlus.app
+          lipo -create "$INTEL/FunkinFPSPlus" "$ARM/FunkinFPSPlus" -output "$BIN/FunkinFPSPlus"
+          lipo -create "$INTEL/lime.ndll" "$ARM/lime.ndll" -output "$BIN/lime.ndll"
+
+      - name: Upload Universal Mac bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: macBuild-Universal
+          path: !FunkinFPSPlus.app
+  Linux-x86_64:
     runs-on: ubuntu-26.04
     permissions: write-all
     steps:
@@ -116,6 +187,6 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: linuxBuild
+          name: linuxBuild-x86_64
           path: export/release/linux/bin
           if-no-files-found: warn
