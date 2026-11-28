@@ -41,6 +41,51 @@ jobs:
           name: windowsBuild-x86_64
           path: export/release/windows/bin
           if-no-files-found: warn
+  Linux-x86_64:
+    runs-on: ubuntu-26.04
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: ${{ env.HAXE_VERSION }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq \
+          libegl1-mesa-dev libgl1-mesa-dev libibus-1.0-dev libdbus-1-dev libdecor-0-dev libudev-dev libgbm-dev libdrm-dev \
+          libpng-dev libturbojpeg-dev libvorbis-dev libopenal-dev libsdl2-dev libglu1-mesa-dev libmbedtls-dev libuv1-dev libsqlite3-dev \
+          libx11-dev libxext-dev libxfixes-dev libxi-dev libxinerama-dev libxkbcommon-dev libxcursor-dev libxrandr-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxxf86vm-dev \
+          libpulse-dev libasound2-dev libpipewire-0.3-dev
+
+      - name: Install libVLC
+        run: sudo apt-get install libvlc-dev libvlccore-dev
+
+      - name: Install Haxe Libraries
+        run: |
+          haxelib --global git haxelib https://github.com/FuroYT/haxelib.git
+          haxelib --global git hmm  https://github.com/FunkinCrew/hmm.git
+          haxelib --global run hmm install -q
+          haxelib --global fixrepo
+          haxelib --global list
+          pushd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml && popd
+
+      - name: Rebuild Lime
+        run : haxelib run lime rebuild linux -release
+
+      - name: Compile FPS Plus Build
+        run: haxelib run lime build linux
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linuxBuild-x86_64
+          path: export/release/linux/bin
+          if-no-files-found: warn
   Build-Mac-x86_64:
     runs-on: macos-26
     permissions: write-all
@@ -148,48 +193,3 @@ jobs:
         with:
           name: macBuild-Universal
           path: FunkinFPSPlus.app
-  Linux-x86_64:
-    runs-on: ubuntu-26.04
-    permissions: write-all
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Haxe
-        uses: krdlab/setup-haxe@v2
-        with:
-          haxe-version: ${{ env.HAXE_VERSION }}
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -qq \
-          libegl1-mesa-dev libgl1-mesa-dev libibus-1.0-dev libdbus-1-dev libdecor-0-dev libudev-dev libgbm-dev libdrm-dev \
-          libpng-dev libturbojpeg-dev libvorbis-dev libopenal-dev libsdl2-dev libglu1-mesa-dev libmbedtls-dev libuv1-dev libsqlite3-dev \
-          libx11-dev libxext-dev libxfixes-dev libxi-dev libxinerama-dev libxkbcommon-dev libxcursor-dev libxrandr-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxxf86vm-dev \
-          libpulse-dev libasound2-dev libpipewire-0.3-dev
-
-      - name: Install libVLC
-        run: sudo apt-get install libvlc-dev libvlccore-dev
-
-      - name: Install Haxe Libraries
-        run: |
-          haxelib --global git haxelib https://github.com/FuroYT/haxelib.git
-          haxelib --global git hmm  https://github.com/FunkinCrew/hmm.git
-          haxelib --global run hmm install -q
-          haxelib --global fixrepo
-          haxelib --global list
-          pushd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml && popd
-
-      - name: Rebuild Lime
-        run : haxelib run lime rebuild linux -release
-
-      - name: Compile FPS Plus Build
-        run: haxelib run lime build linux
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: linuxBuild-x86_64
-          path: export/release/linux/bin
-          if-no-files-found: warn
